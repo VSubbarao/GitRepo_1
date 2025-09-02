@@ -1,0 +1,19 @@
+{
+  "description": "A list of Informatica Cloud assets to be exported from the DEV environment.",
+  "assets": [
+    {
+      "type": "Project",
+      "name": "Sales_Analytics"
+    },
+    {
+      "type": "Taskflow",
+      "name": "tf_Process_Sales_Data",
+      "path": "Sales_Analytics/Taskflows"
+    },
+    {
+      "type": "Mapping",
+      "name": "m_Load_Sales_To_DW",
+      "path": "Sales_Analytics/Mappings"
+    }
+  ]
+}
