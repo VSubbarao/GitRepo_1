@@ -1,0 +1,63 @@
+stages:
+  - validate
+  - build
+  - deploy_uat
+  - deploy_prd
+
+variables:
+  # These will be configured in GitLab CI/CD settings
+  # IICS_USER: $IICS_USER
+  # IICS_PASSWORD: $IICS_PASSWORD
+  # JIRA_URL: $JIRA_URL
+  # JIRA_USER: $JIRA_USER
+  # JIRA_TOKEN: $JIRA_TOKEN
+  # NEXUS_URL: $NEXUS_URL
+  # NEXUS_USER: $NEXUS_USER
+  # NEXUS_PASSWORD: $NEXUS_PASSWORD
+
+# This command will run before each job
+before_script:
+  - pip install -r requirements.txt
+
+validate_commit:
+  stage: validate
+  script:
+    - echo "Validating commit message for Jira ticket..."
+    - python3 scripts/jira_validator.py
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+build_artifact:
+  stage: build
+  script:
+    - echo "Exporting assets from DEV environment..."
+    - python3 scripts/iics_export.py
+  artifacts:
+    paths:
+      - informatica_assets.zip
+    expire_in: 1 week # Keep artifacts for a week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy_to_uat:
+  stage: deploy_uat
+  script:
+    - echo "Deploying assets to UAT environment..."
+    - python3 scripts/iics_import.py --target uat
+    - echo "Uploading artifact to Nexus..."
+    - python3 scripts/nexus_uploader.py
+  dependencies:
+    - build_artifact
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy_to_prd:
+  stage: deploy_prd
+  script:
+    - echo "Deploying assets to PRD environment..."
+    - python3 scripts/iics_import.py --target prd
+  dependencies:
+    - build_artifact
+  when: manual # This job must be triggered manually
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
